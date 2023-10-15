@@ -35,7 +35,7 @@ namespace noise::perlin
 		return lhs.x * rhs.x + lhs.y * rhs.y;
 	}
 
-	template<typename real_t = float, template<typename hash_value> class hash_fn = std::hash>
+	template<typename real_t = float>
 	class perlin2d
 	{
 	private:
@@ -51,26 +51,38 @@ namespace noise::perlin
 				point<real_t>{.x = real_t{1}, .y = real_t{-1}},
 				point<real_t>{.x = real_t{0}, .y = real_t{-1}});
 
-		constexpr static real_t blending(real_t t)
+		constexpr static auto perm =
+			internal::make_array(151, 160, 137, 91, 90, 15, 131, 13, 201, 95, 96, 53, 194, 233, 7, 225, 140, 36, 103,
+								 30, 69, 142, 8, 99, 37, 240, 21, 10, 23, 190, 6, 148, 247, 120, 234, 75, 0, 26, 197,
+								 62, 94, 252, 219, 203, 117, 35, 11, 32, 57, 177, 33, 88, 237, 149, 56, 87, 174, 20,
+								 125, 136, 171, 168, 68, 175, 74, 165, 71, 134, 139, 48, 27, 166, 77, 146, 158, 231, 83,
+								 111, 229, 122, 60, 211, 133, 230, 220, 105, 92, 41, 55, 46, 245, 40, 244, 102, 143, 54,
+								 65, 25, 63, 161, 1, 216, 80, 73, 209, 76, 132, 187, 208, 89, 18, 169, 200, 196, 135,
+								 130, 116, 188, 159, 86, 164, 100, 109, 198, 173, 186, 3, 64, 52, 217, 226, 250, 124,
+								 123, 5, 202, 38, 147, 118, 126, 255, 82, 85, 212, 207, 206, 59, 227, 47, 16, 58, 17,
+								 182, 189, 28, 42, 223, 183, 170, 213, 119, 248, 152, 2, 44, 154, 163, 70, 221, 153,
+								 101, 155, 167, 43, 172, 9, 129, 22, 39, 253, 19, 98, 108, 110, 79, 113, 224, 232, 178,
+								 185, 112, 104, 218, 246, 97, 228, 251, 34, 242, 193, 238, 210, 144, 12, 191, 179, 162,
+								 241, 81, 51, 145, 235, 249, 14, 239, 107, 49, 192, 214, 31, 181, 199, 106, 157, 184,
+								 84, 204, 176, 115, 121, 50, 45, 127, 4, 150, 254, 138, 236, 205, 93, 222, 114, 67, 29,
+								 24, 72, 243, 141, 128, 195, 78, 66, 215, 61, 156, 180);
+
+		constexpr static real_t fade(real_t t)
 		{
 			// we utilize multiple multiplication, as this avoids the need
 			// for cmath functions, that are not yet constexpr! (as of C++20)
 			// 6 * t^5 - 15 * t^4 + 10 * t^3
-			return
-				6 * t * t * t * t * t -
-				15 * t * t * t * t +
-				10 * t * t * t;
+			return t * t * t * (t * (t * 6 - 15) + 10);
 		}
 
 		template<typename index_type>
-		static auto get_gradient_at(point<index_type> index)
+		constexpr static auto get_gradient_at(index_type x, index_type y)
 		{
-			// TODO (@CodingChris): this could be constexpr if we use another default hash
-			hash_fn<index_type> hash;
-			return gradients[(hash(index.x) + hash(index.y)) % gradients.size()];
+			return gradients[(perm[x + perm[y]]) % gradients.size()];
 		}
 
 	public:
+		// TODO (@CodingChris):accessing the permutation table should be done with "% 255" as well as applied to the integer coords - in order to limit overflows
 		static auto perlin(point<real_t> sample_point)
 		{
 			// TODO (@CodingChris): we want to use the systems native signed integer type - i.e. int32_t on 32 bit
@@ -109,10 +121,10 @@ namespace noise::perlin
 			// 11 - upper right corner, (i + 1, j + 1)
 			// where i and j are x and y of the floored values
 			// and the +1 versions are the ceiled values
-			const auto gradient_00 = get_gradient_at(point<integer_t>{floored.x, floored.y});
-			const auto gradient_10 = get_gradient_at(point<integer_t>{floored.x + 1, floored.y});
-			const auto gradient_01 = get_gradient_at(point<integer_t>{floored.x, floored.y + 1});
-			const auto gradient_11 = get_gradient_at(point<integer_t>{floored.x + 1, floored.y + 1});
+			const auto gradient_00 = get_gradient_at(floored.x, floored.y);
+			const auto gradient_10 = get_gradient_at(floored.x + 1, floored.y);
+			const auto gradient_01 = get_gradient_at(floored.x, floored.y + 1);
+			const auto gradient_11 = get_gradient_at(floored.x + 1, floored.y + 1);
 
 			// the floored distance with "- 1" us equal to the ceiled distance
 			const auto noise_00 = gradient_00 * point<real_t>{floored_distance.x, floored_distance.y};
@@ -125,12 +137,13 @@ namespace noise::perlin
 			// we interpolate on the x-axis first - and then interpolate the y values
 			// this is similar to a bi-linear filter
 			const auto lerp = [](const auto first, const auto second, const auto slide) {
-				return first * slide + second * (1 - slide);
+				//return first * slide + second * (1 - slide);
+				return (1 - slide) * first + slide * second;
 			};
 
-			const auto lower_x = lerp(noise_00, noise_10, blending(floored_distance.x));
-			const auto upper_x = lerp(noise_01, noise_11, blending(floored_distance.x));
-			const auto blended_y = lerp(lower_x, upper_x, blending(floored_distance.y));
+			const auto lower_x = lerp(noise_00, noise_10, fade(floored_distance.x));
+			const auto upper_x = lerp(noise_01, noise_11, fade(floored_distance.x));
+			const auto blended_y = lerp(lower_x, upper_x, fade(floored_distance.y));
 
 			return blended_y;
 		}

@@ -1,5 +1,5 @@
 
-#include "perlin2d.h"
+#include "noise.h"
 #include <fstream>
 #include <cstring>
 
@@ -33,16 +33,21 @@ int main()
 	{
 		for (int32_t col = 0; col < width; ++col)
 		{
-			noise::perlin::point<float> sample_point{
-				.x = ((float) col) / 400.f,
-				.y = ((float) row) / 400.f};
-			const auto value = noise::perlin::perlin2d<float>::perlin(sample_point);
+			const auto value = noise::perlin::perlin2d<float>::perlin(245.f + ((float) col) / 50.f,
+																	  324.f + ((float) row) / 50.f);
 
 			const auto grey = (value >= 1.0 ? 255 : (value <= 0.0 ? 0 : (int) std::floor(value * 256.0)));
 			const auto pixel_index = row * width + col;
 			pixel_buffer[pixel_index * 3 + 0] = grey;
 			pixel_buffer[pixel_index * 3 + 1] = grey;
 			pixel_buffer[pixel_index * 3 + 2] = grey;
+
+			if (col % 50 == 0 || row % 50 == 0)
+			{
+				pixel_buffer[pixel_index * 3 + 0] = 255;
+				pixel_buffer[pixel_index * 3 + 1] = 0;
+				pixel_buffer[pixel_index * 3 + 2] = 0;
+			}
 		}
 	}
 

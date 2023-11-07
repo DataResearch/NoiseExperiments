@@ -133,25 +133,34 @@ namespace noise::perlin
 				get_gradient_at(floored_x + 1, floored_y + 1, floored_z + 1)
 			);
 
-			// TODO (@CodingChris): here be dragons of not working code
-			/*
 			const auto noise_contributed_values = internal::make_array(
-				selected_gradients[LOWER_LEFT] * internal::vector2d<real>{fractional_x, fractional_y},
-				selected_gradients[LOWER_RIGHT] * internal::vector2d<real>{fractional_x - 1, fractional_y},
-				selected_gradients[UPPER_LEFT] * internal::vector2d<real>{fractional_x, fractional_y - 1},
-				selected_gradients[UPPER_RIGHT] * internal::vector2d<real>{fractional_x - 1, fractional_y - 1}
+				selected_gradients[0] * internal::vector2d<real>{fractional_x, fractional_y, fractional_z},
+				selected_gradients[1] * internal::vector2d<real>{fractional_x - 1, fractional_y, fractional_z},
+				selected_gradients[2] * internal::vector2d<real>{fractional_x, fractional_y - 1, fractional_z},
+				selected_gradients[3] * internal::vector2d<real>{fractional_x, fractional_y, fractional_z - 1},
+				selected_gradients[4] * internal::vector2d<real>{fractional_x - 1, fractional_y - 1, fractional_z},
+				selected_gradients[5] * internal::vector2d<real>{fractional_x - 1, fractional_y, fractional_z - 1},
+				selected_gradients[6] * internal::vector2d<real>{fractional_x, fractional_y - 1, fractional_z - 1},
+				selected_gradients[7] * internal::vector2d<real>{fractional_x - 1, fractional_y - 1, fractional_z - 1}
 			);
 
-			const auto lower = internal::lerp(noise_contributed_values[LOWER_LEFT],
-											  noise_contributed_values[LOWER_RIGHT],
-											  internal::fade(fractional_x));
-			const auto upper = internal::lerp(noise_contributed_values[UPPER_LEFT],
-											  noise_contributed_values[UPPER_RIGHT],
-											  internal::fade(fractional_x));
-			const auto vertical = internal::lerp(lower, upper, internal::fade(fractional_y));
-			return vertical;
-			 */
-			return real{0};
+			// lerp on the x axis
+			const auto x_blend = internal::fade(fractional_x);
+			const auto axis_lerp_0 = internal::lerp(,, x_blend);
+			const auto axis_lerp_1 = internal::lerp(,, x_blend);
+			const auto axis_lerp_2 = internal::lerp(,, x_blend);
+			const auto axis_lerp_3 = internal::lerp(,, x_blend);
+
+			// lerp bilinear on the y plane
+			const auto y_blend = internal::fade(fractional_y);
+			const auto plane_lerp_0 = internal::lerp(axis_lerp_0, axis_lerp_1, y_blend);
+			const auto plane_lerp_1 = internal::lerp(axis_lerp_2, axis_lerp_3, y_blend);
+
+			// lerp trilinear on the z cube
+			const auto z_blend = internal::fade(fractional_z);
+			const auto cube_lerp_0 = internal::lerp(plane_lerp_0, plane_lerp_1, z_blend);
+
+			return cube_lerp_0;
 		}
 	};
 

@@ -134,14 +134,14 @@ namespace noise::perlin
 			);
 
 			const auto noise_contributed_values = internal::make_array(
-				selected_gradients[0] * internal::vector2d<real>{fractional_x, fractional_y, fractional_z},
-				selected_gradients[1] * internal::vector2d<real>{fractional_x - 1, fractional_y, fractional_z},
-				selected_gradients[2] * internal::vector2d<real>{fractional_x, fractional_y - 1, fractional_z},
-				selected_gradients[3] * internal::vector2d<real>{fractional_x, fractional_y, fractional_z - 1},
-				selected_gradients[4] * internal::vector2d<real>{fractional_x - 1, fractional_y - 1, fractional_z},
-				selected_gradients[5] * internal::vector2d<real>{fractional_x - 1, fractional_y, fractional_z - 1},
-				selected_gradients[6] * internal::vector2d<real>{fractional_x, fractional_y - 1, fractional_z - 1},
-				selected_gradients[7] * internal::vector2d<real>{fractional_x - 1, fractional_y - 1, fractional_z - 1}
+				selected_gradients[0] * internal::vector3d<real>{fractional_x, fractional_y, fractional_z},
+				selected_gradients[1] * internal::vector3d<real>{fractional_x - 1, fractional_y, fractional_z},
+				selected_gradients[2] * internal::vector3d<real>{fractional_x, fractional_y - 1, fractional_z},
+				selected_gradients[3] * internal::vector3d<real>{fractional_x, fractional_y, fractional_z - 1},
+				selected_gradients[4] * internal::vector3d<real>{fractional_x - 1, fractional_y - 1, fractional_z},
+				selected_gradients[5] * internal::vector3d<real>{fractional_x - 1, fractional_y, fractional_z - 1},
+				selected_gradients[6] * internal::vector3d<real>{fractional_x, fractional_y - 1, fractional_z - 1},
+				selected_gradients[7] * internal::vector3d<real>{fractional_x - 1, fractional_y - 1, fractional_z - 1}
 			);
 
 			// lerp on the x axis
@@ -161,6 +161,13 @@ namespace noise::perlin
 			const auto cube_lerp_0 = internal::lerp(plane_lerp_0, plane_lerp_1, z_blend);
 
 			return cube_lerp_0;
+		}
+
+		static real perlin2d(real x, real y)
+		{
+			constexpr static real DEFAULT_Z_2D_APPROX = ((real) 0.753274);
+			const auto value = perlin(x, y, DEFAULT_Z_2D_APPROX);
+			return value;
 		}
 	};
 

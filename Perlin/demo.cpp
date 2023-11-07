@@ -33,8 +33,8 @@ int main()
 	{
 		for (int32_t col = 0; col < width; ++col)
 		{
-			const auto value = noise::perlin::perlin2d<float>::perlin(245.f + ((float) col) / 50.f,
-																	  324.f + ((float) row) / 50.f);
+			const auto value = noise::perlin::perlin3d<float>::perlin2d(245.f + ((float) col) / 50.f,
+																		324.f + ((float) row) / 50.f);
 
 			const auto grey = (value >= 1.0 ? 255 : (value <= 0.0 ? 0 : (int) std::floor(value * 256.0)));
 			const auto pixel_index = row * width + col;

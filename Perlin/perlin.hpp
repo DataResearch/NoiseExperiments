@@ -146,10 +146,10 @@ namespace noise::perlin
 
 			// lerp on the x axis
 			const auto x_blend = internal::fade(fractional_x);
-			const auto axis_lerp_0 = internal::lerp(,, x_blend);
-			const auto axis_lerp_1 = internal::lerp(,, x_blend);
-			const auto axis_lerp_2 = internal::lerp(,, x_blend);
-			const auto axis_lerp_3 = internal::lerp(,, x_blend);
+			const auto axis_lerp_0 = internal::lerp(noise_contributed_values[3], noise_contributed_values[5], x_blend);
+			const auto axis_lerp_1 = internal::lerp(noise_contributed_values[6], noise_contributed_values[7], x_blend);
+			const auto axis_lerp_2 = internal::lerp(noise_contributed_values[0], noise_contributed_values[1], x_blend);
+			const auto axis_lerp_3 = internal::lerp(noise_contributed_values[2], noise_contributed_values[4], x_blend);
 
 			// lerp bilinear on the y plane
 			const auto y_blend = internal::fade(fractional_y);

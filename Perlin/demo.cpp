@@ -1,5 +1,5 @@
 
-#include "noise.h"
+#include "perlin.hpp"
 #include <fstream>
 #include <cstring>
 
